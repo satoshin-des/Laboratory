@@ -75,6 +75,11 @@ long double OrthogonalituDefect(const MatrixXli b, const VectorXld B, const int 
 }
 
 
+long double FrobNorm(const MatrixXli b){
+    return sqrt((long double)(b.transpose() * b).trace());
+}
+
+
 VectorXli ENUM(const MatrixXld mu, const VectorXld B, VectorXld& rho, const int n, const double R) {
     const int n1 = n + 1;
     int i, r[n1];
@@ -141,13 +146,13 @@ void __BKZ__(MatrixXli& b, const int beta, const double d, const int lp, const i
     MatrixXld mu(n, n); mu.setIdentity();
     
     GSO(b, B, mu, n, m);
-    fprintf(fp, "Potential,GSAslope,SS,FirstNorm,OrthogonalityDefect\n");
+    fprintf(fp, "Potential,GSAslope,SS,FirstNorm,LastNorm,OrthogonalityDefect,Frobenius\n");
 
     for (int z = 0, j, t = 0, i, k = 0, h, lk1, l; z < n - 1;) {
-        fprintf(fp, "%Lf,%Lf,%Lf,%lf,%Lf\n", logPot(B, n), -rho(B, n, m), SS(B, n), b.row(0).cast<double>().norm(), OrthogonalituDefect(b, B, n));
+        fprintf(fp, "%Lf,%Lf,%Lf,%lf,%lf,%Lf,%LF,%ld\n", logPot(B, n), -rho(B, n, m), SS(B, n), b.row(0).cast<double>().norm(), b.row(n - 1).cast<double>().norm(), OrthogonalituDefect(b, B, n), FrobNorm(b), b.trace());
         if(BKZTour >= lp) break;
         printf("z = %d\n", z);
-
+        
         if (k == n1){k = 0; ++BKZTour;} ++k;
         l = std::min(k + beta - 1, n); h = std::min(l + 1, n);
         lk1 = l - k + 1;

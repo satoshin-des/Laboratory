@@ -20,7 +20,7 @@ def BKZ(b, beta, d):
         for j in range(N): b[i, j] = bb[i][j]
 
 if __name__ == '__main__':
-    if True:
+    if not True:
         N = int(input())
         b = np.zeros((N, N), dtype=int)
         with open(f'svp_challenge/SVP-{N}-0.svp') as f: X = list(map(int, f.read().split()))
