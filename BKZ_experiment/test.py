@@ -1,18 +1,9 @@
-import ctypes, os, platform, sys
+import ctypes
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-pf = platform.system()
-
-if pf == 'Linux':
-    SDPB = ctypes.cdll.LoadLibrary("./libbkz.so")
-elif pf == 'Windows':
-    os.add_dll_directory(os.getcwd())
-    SDPB = ctypes.cdll.LoadLibrary('SelfDualPotBKZ.dll')
-else:
-    print(f"Platform {pf} is not supported.")
-    sys.exit(0)
+SDPB = ctypes.cdll.LoadLibrary("./libbkz.so")
 
 
 def BKZ(b, beta, d):
