@@ -17,6 +17,9 @@ long double SS(const VectorXld B, const int n);
 long double OrthogonalituDefect(const MatrixXli b, const VectorXld B, const int n);
 VectorXli ENUM(const MatrixXld mu, const VectorXld B, VectorXld& rho, const int n, const double R);
 long double FrobNorm(const MatrixXli b);
+long double TraceNorm(const MatrixXli b);
+long double L_inftyNorm(const MatrixXli b, const int n, const int m);
+long double detlog(const MatrixXli b, const int n, const int m);
 VectorXli enumerate(const MatrixXld mu, const VectorXld B, VectorXld& rho, const int n);
 void __BKZ__(MatrixXli& b, const int beta, const double d, const int lp, const int n, const int m);
 

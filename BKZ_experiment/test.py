@@ -20,7 +20,7 @@ def BKZ(b, beta, d):
         for j in range(N): b[i, j] = bb[i][j]
 
 if __name__ == '__main__':
-    if not True:
+    if True:
         N = int(input())
         b = np.zeros((N, N), dtype=int)
         with open(f'svp_challenge/SVP-{N}-0.svp') as f: X = list(map(int, f.read().split()))
@@ -35,10 +35,8 @@ if __name__ == '__main__':
         print(np.linalg.norm(c[0]))
         print(c)
     data = pd.read_csv('data/data.csv')
-    
-    ddatas = data.columns.values
 
-    for s in ddatas:
+    for s in data.columns.values:
         fig, ax = plt.subplots()
         ax.set_xlabel("Tour")
         ax.set_ylabel(s)
@@ -48,4 +46,4 @@ if __name__ == '__main__':
         plt.tick_params()
         plt.legend()
         fig.set_size_inches(4 * 1.7, 3 * 1.7)
-        plt.savefig(f'data/{s}.png')
+        plt.savefig(f'data/{s}.png'.replace('$', '').replace('\\', ''))

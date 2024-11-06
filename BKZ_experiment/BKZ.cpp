@@ -5,6 +5,7 @@
 #include <omp.h>
 
 // External libraries
+#include <eigen3/unsupported/Eigen/MatrixFunctions>
 #include <eigen3/Eigen/Dense>
 #include <NTL/RR.h>
 #include <NTL/vec_ZZ.h>
@@ -80,6 +81,32 @@ long double FrobNorm(const MatrixXli b){
 }
 
 
+long double TraceNorm(const MatrixXli b){
+    return ((b.transpose() * b).cast<long double>().sqrt()).trace();
+}
+
+
+long double L_inftyNorm(const MatrixXli b, const int n, const int m){
+    long double M = 0, S;
+    for(int i = 0, j; i < n; ++i){
+        S = 0.0;
+        for(j = 0; j < n; ++j) S += abs(b.coeff(i, j));
+        if(S >= M) M = S;
+    }
+    return M;
+}
+
+
+long double detlog(const MatrixXli b, const int n, const int m){
+    long double S = 0;
+    VectorXld B(n);
+    MatrixXld mu(n, n), c = b.cast<long double>().log();
+    GSO(c, B, mu, n, m);
+    for(int i = 0; i < n; ++i) S += 0.5 * log(B.coeff(i));
+    return S;
+}
+
+
 VectorXli ENUM(const MatrixXld mu, const VectorXld B, VectorXld& rho, const int n, const double R) {
     const int n1 = n + 1;
     int i, r[n1];
@@ -146,10 +173,10 @@ void __BKZ__(MatrixXli& b, const int beta, const double d, const int lp, const i
     MatrixXld mu(n, n); mu.setIdentity();
     
     GSO(b, B, mu, n, m);
-    fprintf(fp, "Potential,GSAslope,SS,FirstNorm,LastNorm,OrthogonalityDefect,Frobenius\n");
+    fprintf(fp, "Potential,GSAslope,SS,FirstNorm,LastNorm,OrthogonalityDefect,Frobenius,TraceNorm,$L_{\\infty}$-norm,DetOfLog\n");
 
     for (int z = 0, j, t = 0, i, k = 0, h, lk1, l; z < n - 1;) {
-        fprintf(fp, "%Lf,%Lf,%Lf,%lf,%lf,%Lf,%LF,%ld\n", logPot(B, n), -rho(B, n, m), SS(B, n), b.row(0).cast<double>().norm(), b.row(n - 1).cast<double>().norm(), OrthogonalituDefect(b, B, n), FrobNorm(b), b.trace());
+        fprintf(fp, "%Lf,%Lf,%Lf,%lf,%lf,%Lf,%Lf,%Lf,%Lf,%Lf\n", logPot(B, n), -rho(B, n, m), SS(B, n), b.row(0).cast<double>().norm(), b.row(n - 1).cast<double>().norm(), OrthogonalituDefect(b, B, n), FrobNorm(b), TraceNorm(b), L_inftyNorm(b, n, m), -detlog(b, n, m));
         if(BKZTour >= lp) break;
         printf("z = %d\n", z);
         
