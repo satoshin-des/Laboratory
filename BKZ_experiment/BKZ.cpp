@@ -97,6 +97,28 @@ long double L_inftyNorm(const MatrixXli b, const int n, const int m){
 }
 
 
+long double GS_L_infinityNorm(const MatrixXli b, const int n, const int m){
+    MatrixXld GSOb(n, m), mu(n, n);
+
+    for (int i = 0, j; i < n; ++i) {
+        mu.coeffRef(i, i) = 1.0;
+        GSOb.row(i) = b.row(i).cast<long double>();
+        for (j = 0; j < i; ++j) {
+            mu.coeffRef(i, j) = b.row(i).cast<long double>().dot(GSOb.row(j)) / GSOb.row(j).dot(GSOb.row(j));
+            GSOb.row(i) -= mu.coeff(i, j) * GSOb.row(j);
+        }
+    }
+
+    long double M = 0, S;
+    for(int i = 0, j; i < n; ++i){
+        S = 0.0;
+        for(j = 0; j < n; ++j) S += abs(GSOb.coeff(i, j));
+        if(S >= M) M = S;
+    }
+    return M;
+}
+
+
 long double detlog(const MatrixXli b, const int n, const int m){
     long double S = 0;
     VectorXld B(n);
@@ -173,10 +195,10 @@ void __BKZ__(MatrixXli& b, const int beta, const double d, const int lp, const i
     MatrixXld mu(n, n); mu.setIdentity();
     
     GSO(b, B, mu, n, m);
-    fprintf(fp, "Potential,GSAslope,SS,FirstNorm,LastNorm,OrthogonalityDefect,Frobenius,TraceNorm,$L_{\\infty}$-norm,DetOfLog\n");
+    fprintf(fp, "Potential,GSAslope,SS,FirstNorm,LastNorm,OrthogonalityDefect,Frobenius,TraceNorm,$L_{\\infty}$-norm,DetOfLog,GSO_Linfty\n");
 
     for (int z = 0, j, t = 0, i, k = 0, h, lk1, l; z < n - 1;) {
-        fprintf(fp, "%Lf,%Lf,%Lf,%lf,%lf,%Lf,%Lf,%Lf,%Lf,%Lf\n", logPot(B, n), -rho(B, n, m), SS(B, n), b.row(0).cast<double>().norm(), b.row(n - 1).cast<double>().norm(), OrthogonalituDefect(b, B, n), FrobNorm(b), TraceNorm(b), L_inftyNorm(b, n, m), -detlog(b, n, m));
+        fprintf(fp, "%Lf,%Lf,%Lf,%lf,%lf,%Lf,%Lf,%Lf,%Lf,%Lf,%Lf\n", logPot(B, n), -rho(B, n, m), SS(B, n), b.row(0).cast<double>().norm(), b.row(n - 1).cast<double>().norm(), OrthogonalituDefect(b, B, n), FrobNorm(b), TraceNorm(b), L_inftyNorm(b, n, m), -detlog(b, n, m), GS_L_infinityNorm(b, n, m));
         if(BKZTour >= lp) break;
         printf("z = %d\n", z);
         
