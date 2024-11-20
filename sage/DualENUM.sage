@@ -142,10 +142,6 @@ def BKZ(b, beta, d, n, m):
     return b
 
 
-def DualBKZ(b, beta, d, n, m):
-    
-
-
 # main
 if __name__ == '__main__':
     n = ZZ(input())
