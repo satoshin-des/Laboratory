@@ -4,10 +4,10 @@ import matplotlib.animation as amt
 
 # Enumerates lattice vector whose norm is less than R
 def ENUM(mu, B, R, n):
-    sigma = zero_matrix(QQ, n + 1, n)
+    sigma = np.zeros((n + 1, n))
     r = np.roll(np.arange(n + 1) - 1, -1)
-    rho = zero_vector(QQ, n + 1)
-    v = zero_vector(ZZ, n) # Coefficient vector of the lattice vector
+    rho = np.zeros(n + 1)
+    v = np.zeros(n, dtype=int) # Coefficient vector of the lattice vector
     center = sigma[0][:] # Standards of zigzag searching
     weight = v[:] # Weights of zigzag searching
     last_nonzero = k = 0
@@ -24,7 +24,7 @@ def ENUM(mu, B, R, n):
             else:
                 k -= 1
                 r[k - 1] = max(r[k - 1], r[k])
-                for i in xsrange(r[k], k, -1):
+                for i in range(r[k], k, -1):
                     sigma[i, k] = sigma[i + 1, k] + mu[i, k] * v[i]
                 center[k] = -sigma[k + 1, k]
                 v[k] = round(center[k])
@@ -49,8 +49,8 @@ def ENUM(mu, B, R, n):
 
 # Enumerates the shortest lattice vector
 def EnumerateSV(mu, B, n):
-    ENUM_v = zero_matrix(ZZ, n); R = B[0]
-    D = vector(QQ, n + 1)
+    ENUM_v = np.zeros(n, dtype=int); R = B[0]
+    D = np.zeros(n + 1)
     while True:
         pre_ENUM_v = ENUM_v[:]
         DD = D # D[k]=∥πₖ(v)∥
@@ -61,54 +61,17 @@ def EnumerateSV(mu, B, n):
             R = min(R, 0.99 * D[0])
 
 
-def insert(b, x, n):
-    alpha = QQ(0.99)
-    beta = 4 / (4 * alpha - 1)
-    U = zero_matrix(ZZ, n, n + 1)
-
-    # Construction of gamma
-    tmp = x.norm()
-    tmp *= beta ^ ((n - 1) / 2)
-    tmp += tmp
-    gamma = round(tmp)
-
-    # Construction of matrix
-    for i in xsrange(n):
-        U[i, i] = 1
-        U[i, n] = gamma * x[i]
-    U = U.LLL(delta=alpha)
-
-    return U[:, : n] * b
-
-
-# Computes Gram-Schmidt informations of dual-lattice
-def DualGSO(b, n):
-    B, mu = b.gram_schmidt()
-    B = (B * B.T).diagonal()
-
-    # dual GSO
-    C = vector(QQ, n)
-    hmu = identity_matrix(QQ, n, n)
-    for i in xsrange(n):
-        C[i] = 1 / B[i]
-        for j in xsrange(i + 1, n):
-            hmu[i, j] = -vector(mu[j, i: j]).inner_product(vector(hmu[i, i: j]))
-    return C, hmu
-
-
 def project_basis(k, l, b, n, m):
     GSOb, mu = b.gram_schmidt()
-    pi_b = zero_matrix(QQ, l - k + 1, m)
-    for i in xsrange(k, l + 1):
-        for j in xsrange(k, n):
+    pi_b = np.zeors((l - k + 1, m))
+    for i in range(k, l + 1):
+        for j in range(k, n):
             pi_b[i - k] += (b[i] * GSOb[j]) / (GSOb[j] * GSOb[j]) * GSOb[j]
     return pi_b
 
 
 def BKZ(b, beta, d, n, m):
     z = k = tour = 0
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
     images = []
     while z < n - 1:
         # Goes to next tour
@@ -124,11 +87,10 @@ def BKZ(b, beta, d, n, m):
         # Computes Gram-Schmidt informaion
         GSOb, mu = b.gram_schmidt()
         B = (GSOb * GSOb.T).diagonal()
-        
-        JJ = vector(RR, len(B))
-        for i in xsrange(len(JJ)): JJ[i] = log(B[i])
-        im = ax.plot(JJ, animated=True, color='blue')
-        images.append(im)
+
+
+        im = plt.imshow(np.arange(B), B, cmap=plt.cm.gray_r, animated=True)
+        images.append([im])
 
 
         # Enumerates the shortest lattice vector on projection lattice L_{[k1, l]}
@@ -152,14 +114,13 @@ def BKZ(b, beta, d, n, m):
             b[: h] = c.LLL(delta = d)
     
     anime = amt.ArtistAnimation(fig, images, interval=100)
-    anime.save("sample.gif", writer="pillow")
-    plt.show()
+    anime.save(f'output/output{int(time.time())}.gif', writer='imagemagick')
     return b
 
 
 # main
 if __name__ == '__main__':
-    n = 10
+    n = ZZ(input())
     b = matrix(ZZ, n, n)
 
     for i in xsrange(n):
