@@ -1,3 +1,4 @@
 *.sage.py
 .vscode/
-sage/sample.gif
+*.gif
+*.mp4

@@ -1,76 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as amt
-import sys
-
-def GenRandomBasis(n : int):
-    """
-    Generates random full-rank basis matrix.
-    
-    Parameters
-    ----------
-    n : int
-        Number of rank.
-
-    Returns
-    -------
-    b : numpy.ndarray
-        random basis matrix(each basis is row-vector)
-    """
-    if n <= 1:
-        print("Input Error: input rank is too few.")
-        sys.exit(0)
-
-    E = np.identity(n - 1)
-    left = np.random.randint(1, 9999999, (n, 1))
-    b = np.vstack([np.zeros(n - 1), E])
-    b = np.hstack([left, b])
-    return b.astype(int)
 
 
-def Gram_Schmidt(b : np.ndarray):
-    """
-    Computes Gram-Schmidt orthogonal basis matrix.
-    
-    Parameters
-    ----------
-    b : numpy.ndarray
-        A lattice basis matrix(Each basis is row vector).
+def main():
+    rng = np.random.default_rng()
+    b = np.eye(50, dtype=int)
+    for i in range(50):
+        b[i, 0] = rng.integers(100000, 1000000)
+    print(b)
 
-    Returns
-    -------
-    GSOb : numpy.ndarray
-        Gram-Schmidt orthogonal basis matrix of an input basis.
-    mu : int
-        Gram-Schmidt coefficient matrix
-    """
-    n, m = b.shape
-    GSOb = np.zeros((n, m))
-    mu = np.identity(n)
+    print(DeepLLLReduce(b))
+    #print(PotLLLReduce(b))
+    #print(LLLReduce(b))
+    #print(LLLReduce_back(b))
 
-    for i in range(n):
-        GSOb[i] = b[i].copy()
-        for j in range(i):
-            mu[i, j] = np.dot(b[i], GSOb[j]) / np.dot(GSOb[j], GSOb[j])
-            GSOb[i] -= mu[i, j] * GSOb[j].copy()
-    return GSOb, mu
 
 def Gram_Schmidt_squared(b : np.ndarray):
-    """
-    Computes Gram-Schmidt orthogonal basis matrix.
-    
-    Parameters
-    ----------
-    b : numpy.ndarray
-        A lattice basis matrix(Each basis is row vector).
-
-    Returns
-    -------
-    B : numpy.ndarray
-        Squared norm vector of each Gram-Schmidt orthogonal basis.
-    mu : int
-        Gram-Schmidt coefficient matrix
-    """
     n, m = b.shape
     GSOb = np.zeros((n, m))
     mu = np.identity(n)
@@ -85,32 +31,7 @@ def Gram_Schmidt_squared(b : np.ndarray):
     return B, mu
 
 
-def SizeReduce(b : np.ndarray, mu : np.ndarray, i : int, j : int):
-    n, m = b.shape
-
-    if abs(mu[i, j]) > 0.5:
-        q = round(mu[i, j])
-        b[i] -= q * b[j].copy()
-        mu[i][: j + 1] -= q * mu[j][: j + 1].copy()
-    return b, mu
-
-
 def LLLReduce(b : np.ndarray, d : float = 0.99):
-    """
-    LLL-reduces.
-    
-    Parameters
-    ----------
-    b : numpy.ndarray
-        A lattice basis matrix(Each basis is row vector).
-    d : float
-        A reduction parameter.
-
-    Returns
-    -------
-    b : numpy.ndarray
-        LLL-reduced basis matrix.
-    """
     n = b.shape[0]
     B, mu = Gram_Schmidt_squared(b)
     k = 1
@@ -120,10 +41,7 @@ def LLLReduce(b : np.ndarray, d : float = 0.99):
     images = []
 
     while k < n:
-        
-        #im = ax.plot(B, animated=True, color='blue')
-        im = ax.bar(np.arange(len(B)) + 1, B, color='blue')
-        plt.yscale('log')
+        im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
         images.append(im)
         
         for j in range(k)[::-1]:
@@ -151,38 +69,24 @@ def LLLReduce(b : np.ndarray, d : float = 0.99):
         else: k += 1
     print("start")
     anime = amt.ArtistAnimation(fig, images, interval=100)
-    anime.save("LLL.mp4", writer="ffmpeg")
+    anime.save("LLL_nonlog.mp4", writer="ffmpeg")
     return b
 
 
 def DeepLLLReduce(b : np.ndarray, d : float = 0.99):
-    """
-    Deep-LLL-reduces.
-    
-    Parameters
-    ----------
-    b : numpy.ndarray
-        A lattice basis matrix(Each basis is row vector).
-    d : float
-        A reduction parameter.
-
-    Returns
-    -------
-    b : numpy.ndarray
-        Deep-LLL-reduced basis matrix.
-    """
     B, mu = Gram_Schmidt_squared(b)
     k : int = 1
     n = len(b)
  
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    plt.ylim(0, 14)
     images = []
 
     while k < n:
         print(k)
-        im = ax.bar(np.arange(len(B)) + 1, B, color='blue')
-        plt.yscale('log')
+        im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
+        plt.ylim(0, 14)
         images.append(im)
         
         for j in range(k)[::-1]:
@@ -205,6 +109,9 @@ def DeepLLLReduce(b : np.ndarray, d : float = 0.99):
                 B, mu = Gram_Schmidt_squared(b)
                 k = max(i - 1, 0)
         k += 1
+    im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
+    plt.ylim(0, 14)
+    images.append(im)
     print("start")
     anime = amt.ArtistAnimation(fig, images, interval=100)
     anime.save("DeepLLL.mp4", writer="ffmpeg")
@@ -218,12 +125,13 @@ def PotLLLReduce(b, delta = 0.99):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    plt.ylim(0, 14)
     images = []
     
     while l < n:
         print(l)
-        im = ax.bar(np.arange(len(B)) + 1, B, color='blue')
-        plt.yscale('log')
+        im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
+        plt.ylim(0, 14)
         images.append(im)
         # Size-reduces the basis
         for j in range(l)[::-1]:
@@ -251,16 +159,103 @@ def PotLLLReduce(b, delta = 0.99):
             l = k
         else:
             l += 1
+    
+    im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
+    plt.ylim(0, 14)
+    images.append(im)
+    
     print("start")
     anime = amt.ArtistAnimation(fig, images, interval=100)
     anime.save("PotLLL.mp4", writer="ffmpeg")
     return b
 
-rng = np.random.default_rng()
-b = np.eye(50, dtype=int)
-for i in range(50):
-    b[i, 0] = rng.integers(100000, 1000000)
-print(b)
-#print(DeepLLLReduce(b))
-#print(PotLLLReduce(b))
-print(LLLReduce(b))
+
+def LLLReduce_back(b, d : float = 0.99):
+    n = b.shape[0]
+    B, mu = Gram_Schmidt_squared(b)
+    k = n - 2
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    images = []
+    
+    while k >= 0:
+        print(k)
+        im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
+        images.append(im)
+        for i in range(k, n):
+            for j in range(i)[::-1]:
+                if np.abs(mu[i, j]) > 0.5:
+                    q = round(mu[i, j])
+                    b[i] -= q * np.copy(b[j])
+                    mu[i, : j + 1] -= q * np.copy(mu[j, : j + 1])
+
+        if k <= n - 2 and B[k + 1] < (d - mu[k + 1, k] * mu[k + 1, k]) * B[k]:
+            b[k + 1], b[k] = np.copy(b[k]), np.copy(b[k + 1])
+
+            #Update GSO-information
+            B, mu = Gram_Schmidt_squared(b)
+            k += 1
+        else: k -= 1
+    
+    im = ax.bar(np.arange(len(B)) + 1, np.log(B) / 2, color='blue')
+    images.append(im)
+    
+    print("start")
+    anime = amt.ArtistAnimation(fig, images, interval=100)
+    anime.save("DualLLL.mp4", writer="ffmpeg")
+    
+    return b
+
+
+    """
+    void DualDeepLLLReduce(NTL::ZZ **b, const double d, const int n, const int m){
+    int j, i, l;
+    double **mu = (double **)malloc(n * sizeof(double *)), *B, **nu = (double **)malloc(n * sizeof(double *)), q, D;
+    B = (double *)malloc(n * sizeof(double));
+    for(i = 0; i < n; ++i){
+        mu[i] = (double *)malloc(n * sizeof(double));
+        nu[i] = (double *)malloc(n * sizeof(double));
+    }
+    GSO(b, B, mu, n, m);
+    nu[n - 1][n - 1] = 1.0;
+    
+    for(int k = n - 2; k >= 0;){
+        nu[k][k] = 1.0;
+
+        // 部分双対サイズ基底簡約
+        for(j = k + 1; j < n; ++j){
+            /* 双対GSO係数 */
+            nu[k][j] = 0;
+            for(i = k; i < j; ++i) nu[k][j] -= mu[j][i] * nu[k][i];
+
+            /* 双対サイズ基底簡約 */
+            if(nu[k][j] > 0.5 || nu[k][j] < -0.5){
+                q = round(nu[k][j]);
+                for(i = 0; i < m; ++i) b[j][i] += q * b[k][i];
+                for(i = j; i < n; ++i) nu[k][i] -= q * nu[j][i];
+                for(i = 0; i <= k; ++i) mu[j][i] += q * mu[k][i];
+            }
+        }
+
+        D = 0.0; l = n - 1;
+        for(j = k; j < n; ++j) D += nu[k][j] * nu[k][j] / B[j];
+        while(l > k){
+            if(B[l] * D < d){
+                DualDeepInsertion(b, m, k, l);
+                k = fmin(l, n - 2) + 1;
+                GSO(b, B, mu, n, m);
+            }else{
+                D -= nu[k][l] * nu[k][l] / B[l];
+                --l;
+            }
+        }
+        --k;
+    }
+}
+
+    """
+
+
+if __name__ == '__main__':
+    main()
